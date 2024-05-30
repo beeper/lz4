@@ -1,22 +1,12 @@
 // Package lz4block provides LZ4 BlockSize types and pools of buffers.
 package lz4block
 
-import "sync"
-
 const (
 	Block64Kb uint32 = 1 << (16 + iota*2)
 	Block256Kb
 	Block1Mb
 	Block4Mb
 	Block8Mb = 2 * Block4Mb
-)
-
-var (
-	BlockPool64K  = sync.Pool{New: func() interface{} { return make([]byte, Block64Kb) }}
-	BlockPool256K = sync.Pool{New: func() interface{} { return make([]byte, Block256Kb) }}
-	BlockPool1M   = sync.Pool{New: func() interface{} { return make([]byte, Block1Mb) }}
-	BlockPool4M   = sync.Pool{New: func() interface{} { return make([]byte, Block4Mb) }}
-	BlockPool8M   = sync.Pool{New: func() interface{} { return make([]byte, Block8Mb) }}
 )
 
 func Index(b uint32) BlockSizeIndex {
@@ -50,36 +40,24 @@ func (b BlockSizeIndex) IsValid() bool {
 }
 
 func (b BlockSizeIndex) Get() []byte {
-	var buf interface{}
 	switch b {
 	case 4:
-		buf = BlockPool64K.Get()
+		return make([]byte, Block64Kb)
 	case 5:
-		buf = BlockPool256K.Get()
+		return make([]byte, Block256Kb)
 	case 6:
-		buf = BlockPool1M.Get()
+		return make([]byte, Block1Mb)
 	case 7:
-		buf = BlockPool4M.Get()
+		return make([]byte, Block4Mb)
 	case 3:
-		buf = BlockPool8M.Get()
+		return make([]byte, Block8Mb)
 	}
-	return buf.([]byte)
+
+	return nil
 }
 
 func Put(buf []byte) {
-	// Safeguard: do not allow invalid buffers.
-	switch c := cap(buf); uint32(c) {
-	case Block64Kb:
-		BlockPool64K.Put(buf[:c])
-	case Block256Kb:
-		BlockPool256K.Put(buf[:c])
-	case Block1Mb:
-		BlockPool1M.Put(buf[:c])
-	case Block4Mb:
-		BlockPool4M.Put(buf[:c])
-	case Block8Mb:
-		BlockPool8M.Put(buf[:c])
-	}
+	return
 }
 
 type CompressionLevel uint32
